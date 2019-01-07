@@ -1,0 +1,219 @@
+#include <stdio.h>
+#include <stdlib.h>
+struct tree
+{
+	int data;
+	struct tree **child;
+};
+struct stack
+{
+	struct tree *search;
+	struct stack *prev;
+};
+struct que
+{
+	struct tree *search;
+	struct que *next;
+};
+struct que_int
+{
+	int n;
+	struct que_int *next;
+};
+void insert_stack(struct stack **top,struct tree *search)
+{
+	if(*top==NULL)
+	{
+		*top=(struct stack *)malloc(sizeof(struct stack));
+		(*top)->prev=NULL;
+		(*top)->search=search;
+	}
+	else
+	{
+		struct stack *tmp=(*top);
+		(*top)=(struct stack *)malloc(sizeof(struct stack));
+		(*top)->prev=tmp;
+		(*top)->search=search;
+	}
+}
+void insert_que(struct que **head,struct tree *search)
+{
+	if(*head==NULL)
+	{
+		*head=(struct que*)malloc(sizeof(struct que));
+		(*head)->next=NULL;
+		(*head)->search=search;
+	}
+	else
+	{
+		struct que *tmp=*head;
+		while(tmp->next!=NULL)
+		tmp=tmp->next;
+		tmp->next=(struct que *)malloc(sizeof(struct que));
+		tmp->next->next=NULL;
+		tmp->next->search=search;
+	}
+}
+void delete_stack(struct stack **top)//Listenin ilk elemanini silio
+{ 
+	struct stack *tmp=*top;
+	if(tmp->prev==NULL)
+    {
+    	free(tmp);
+        *top=NULL;
+	}
+	else
+	{
+	*top=(*top)->prev;
+	free(tmp);
+    }
+}
+void delete_que(struct que **head)//Listenin ilk elemanini silio
+{
+	struct que *tmp=*head;
+	if(tmp->next==NULL)
+	{
+		free(tmp);
+		*head=NULL;
+	}
+	else
+	{
+	(*head)=tmp->next;
+	free(tmp);
+    }
+}
+struct tree *DFS(struct tree *head,int search)// datasi searche olan elemani buluo ve onun pointerini returnlior 
+{// not/ tmp yerine direk head yazsakda olur ama böyle yazdim ve degistirmeye üsendim
+	int i;
+	struct tree *tmp=head; 
+	struct stack *top;
+	insert_stack(&top,tmp);//bi listeye ilk elemani koyuyuo
+	while(tmp!=NULL)//bu while while(1) gibisinden çalisio 
+	{
+	
+		if(tmp->data==search)//check edio 
+        return tmp;
+        else
+        {   
+            delete_stack(&top);//baktigi elemani listeden silio  
+        	for(i=0;tmp->child[i]!=NULL;i++)//childleri listenin basina ekle
+        	insert_stack(&top,tmp->child[i]);
+        	if(top==NULL)//listede bakcak eleman kalmayinca breaklio
+        	break;
+        	tmp=top->search;//tmpi listenin bi sonraki elemani yapio
+        	
+		}
+    
+	}
+	return NULL;// bulamazsa NULL verio
+}
+struct tree *BFS(struct tree *head,int search)// DFS le ayni mantik
+{
+	int i;
+	struct que *start;
+	insert_que(&start,head);// ilk elemani listeye at
+	while(head!=NULL)
+	{
+		if(head->data==search)//check edio
+		return head;
+		else
+		{
+		delete_que(&start);//kontrol edilen elemani listeden sil
+			for(i=0;head->child[i]!=NULL;i++)
+			insert_que(&start,head->child[i]);//childeri listenin sonuna ekle
+			if(start==NULL)//liste bos ise breakle
+		    break;
+			head=start->search;//listenin sonraki elemanina git
+		}
+	}
+	return NULL;//bulamadiysan NULL retrunle
+}
+void insert_que_int(struct que_int **head,int n)// Que ama tree* yerine int tutuo, tree create fonksyonunda kullandim BFS ya da DFS le alakasiz
+{
+	if(*head==NULL)
+	{
+		*head=(struct que_int*)malloc(sizeof(struct que_int));
+		(*head)->next=NULL;
+		(*head)->n=n;
+	}
+	else
+	{
+		struct que_int *tmp=*head;
+		while(tmp->next!=NULL)
+		tmp=tmp->next;
+		tmp->next=(struct que_int*)malloc(sizeof(struct que_int));
+		tmp->next->next=NULL;
+		tmp->next->n=n;
+	}
+}
+struct tree *create_tree(struct tree **head,int num)//SEND THE HEAD NULL PLS 
+{// bi tree olusturuo bu treenin datasi num childlari onu tam bolen sayilar oluo(1 ve kendisi hariç), test amaçli yazdim,
+	int i,a=0;
+	struct que_int *que=NULL;
+
+	
+	*head=(struct tree *)malloc(sizeof(struct tree));
+	(*head)->data=num;
+    
+	for(i=2;i<=num/2;i++)// tam bolen sayilari buluo ve bi que liste koyuyo, a variablei da bolen sayilarin sayisi
+	{//Not/ bunu yapmanin amaci bölenleri bulmaktan ziyade a yi tespit edip ona göre mallocla yer açmak
+		if(num%i==0)
+		{
+			a++;
+			insert_que_int(&que,i);
+		}
+	}
+	
+	if(a==0)// hiç bitane yoksa direk bitane NULL child açio
+	{
+	  (*head)->child=(struct tree **)malloc(sizeof(struct tree*));
+	   (*head)->child[0]=NULL;
+	    return *head;
+	}
+    (*head)->child=(struct tree **)malloc(sizeof(struct tree *)*(a+1));//a+1 tane açio, son child null baska childin olmadigini gösterio
+	for(i=0;i<a+1;i++)//Childlari null yapio 
+	{
+		(*head)->child[i]=NULL;
+	}
+	struct que_int *tmp=que;
+	for(i=0;i<a;i++)//sirayla childlari olusturuo
+	{
+		create_tree(&((*head)->child[i]),tmp->n);
+		tmp=tmp->next;
+	}
+	return *head;// sonra listenin en basini returnlio
+
+}
+void BFS_print(struct tree *head)//BFS imsi sekilde printlio, childlarla parentlar arasinda satir atlamiyor ama test amaçli o yüzden çok takmadim
+{
+	int i;
+	struct que *start=NULL;
+	insert_que(&start,head);
+	while(head!=NULL)
+	{
+		printf("%d ",head->data);
+		
+		delete_que(&start);
+	
+		for(i=0;head->child[i]!=NULL;i++)
+		insert_que(&start,head->child[i]);
+
+		if(start==NULL)
+		break;
+		
+		head=start->search;
+	}
+	
+	return;
+}
+main()// test etmek için yazdim 
+{    //NOT aradigi sayi yoksa NULL a ulasamadigindan segmentation fault verio
+	struct tree *head=NULL;
+	struct tree *a;
+	head=create_tree(&head,105);
+	BFS_print(head);
+	printf("\n");
+	a=DFS(head,7);
+	printf("%d",a->data);
+	
+}
