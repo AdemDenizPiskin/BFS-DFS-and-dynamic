@@ -128,7 +128,7 @@ struct tree *BFS(struct tree *head,int search)// DFS le ayni mantik
 	}
 	return NULL;//bulamadiysan NULL retrunle
 }
-void insert_que_int(struct que_int **head,int n)// Que ama tree* yerine int tutuo, tree create fonksyonunda kullandim BFS ya da DFS le alakasiz
+void insert_que_int(struct que_int **head,int n)/*Que ama tree pointerı yerine int tutuo, tree create fonksyonunda kullandim BFS ya da DFS le alakasiz*/
 {
 	if(*head==NULL)
 	{
@@ -170,13 +170,13 @@ struct tree *create_tree(struct tree **head,int num)//SEND THE HEAD NULL PLS
 	   (*head)->child[0]=NULL;
 	    return *head;
 	}
-    (*head)->child=(struct tree **)malloc(sizeof(struct tree *)*(a+1));//a+1 tane açio, son child null baska childin olmadigini gösterio
-	for(i=0;i<a+1;i++)//Childlari null yapio 
+    (*head)->child=(struct tree **)malloc(sizeof(struct tree *)*(a+1));//a+1 tane açio, son child NULL başka childin olmadiğini gösterio
+	for(i=0;i<a+1;i++)//Childları NULL yapio 
 	{
 		(*head)->child[i]=NULL;
 	}
 	struct que_int *tmp=que;
-	for(i=0;i<a;i++)//sirayla childlari olusturuo
+	for(i=0;i<a;i++)//sırayla childlari oluşturuyor
 	{
 		create_tree(&((*head)->child[i]),tmp->n);
 		tmp=tmp->next;
@@ -184,7 +184,7 @@ struct tree *create_tree(struct tree **head,int num)//SEND THE HEAD NULL PLS
 	return *head;// sonra listenin en basini returnlio
 
 }
-void BFS_print(struct tree *head)//BFS imsi sekilde printlio, childlarla parentlar arasinda satir atlamiyor ama test amaçli o yüzden çok takmadim
+void BFS_print(struct tree *head)/*BFS imsi sekilde printlio, childlarla parentlar arasinda satir atlamiyor ama test amaçli o yüzden çok takmadim*/
 {
 	int i;
 	struct que *start=NULL;
