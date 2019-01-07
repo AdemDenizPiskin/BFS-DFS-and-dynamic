@@ -1,0 +1,186 @@
+#include <stdio.h>
+#include <stdlib.h>
+/* Çantayi en efficent sekilde doldurmak için v/w(value/weight) orani en yüksek olmali. v/w orani en yuksek esyalari yer kalmayana 
+kadar dolduruyoruz çantaya .Her esya koyusunda bir tree elemaný olusturuyor, bu elemanda cantadaki esyalar,esyalarin toplam valuesu ve 
+weighti kayitli. Canta dolunca recursive olarak esya koymadan onceki boslugu olabilecek en efficent sekilde doldurup doldurmadigina 
+bakio.Eger o kisimin v/w(weighte kullanilmayan empty kisimda dahil) çantaya konulmayan en yuksek v/w lu esyanýn v/w sundan daha 
+yuksekse o zmn onu max diye returnlio, degilse boslugu farkli sekillerde doldurmaya çalsio en yuksek degerliyi bulana kadar*/
+struct tree{   /* Tree structi recursive olustruacak, bi sonraki childlarda çantadaki kalan bosluga yeni esya koyuyor, baska esya koyamayinca NULL verio*/
+	char *items;  // çantadaki item listesi
+int totw;   // çantadaki esyalain valuesu
+int totv; // çantadaki esyalain weighti
+	struct tree **child;   //Childlara giden pointerlarin arrayi
+};
+
+struct items{   // itemlerin listesini olusturan struct.
+	char name;     
+   int weight;
+	int value;
+	float density;   // value/weight
+
+};
+struct tree *insert_item(struct tree *head,struct items *item_list,int empty,int n,int j){
+
+/*Fonk max valuelu çantanin tree elemanini bulup returnlio. Head bi usteki elemanin pointeri,item_list koyabilecegiiz esyalar,empty kalan alan,n item_listeki esya sayisi,j de en son koydugun eleman*/
+// NOTE item_list itemlarin v/w larin oranina gore duzenli gelio (line 153-161)
+	int i,k,t,m,r;
+	struct tree *tmp=head;
+	struct tree *new_node=(struct tree *)malloc(sizeof(struct tree));
+	struct tree *max=NULL;
+	struct tree *kid=NULL;
+    if(tmp==NULL) //Listede bisey yoksa ilk nodeu olusturuo
+    {
+    	i=0;
+    	tmp=(struct tree*)malloc(sizeof(struct tree));
+    	tmp->items=(char *)malloc(sizeof(char)*n);
+    	tmp->items[0]='\0';
+    	tmp->totv=0;
+    	tmp->totw=0;
+    	tmp->child=(struct tree **)malloc(sizeof(struct tree *)*(n+1));
+    	for(k=0;k<n;k++) 
+	    tmp->child[k]=	NULL;
+	    //Recursive
+	    max=insert_item(tmp,item_list,empty,n,-1);// bi altaki childin maxini alio
+	    if(max==tmp)// Eger altaki childda baska esya koyamiyorsan tmpi dondürüyor (line 144)
+	   	return tmp;
+	    else
+		 {
+		 		// Find next max v/w item index=m
+	     	for(m=i;m<n;m++)
+	     	{
+		  	    for(t=0;max->items[t]!=NULL;t++)
+		  	    {
+		  	     if(item_list[m].name==max->items[t])
+		  	     break;
+				}
+			if(t==k)
+			break;
+		    }
+			for(r=0;r<n;r++) // maxi ario childlari arasindan. NOTE r her artiginda kidi farkli itemler koymasini saglio
+			{
+			
+	     	if((max->totv)/empty>=item_list[m].density)//eger v/w su çantada olmayan max v/w li esyanin v/w sundan yüksekse max direk odur
+	     		return max;
+	     		kid=insert_item(tmp,item_list,empty,n,r);//v/w büyük degilse diger olasiliklari dene
+	     	
+	     		if((kid->totv)/empty>(max->totv)/empty)
+	     		{
+	     			max=kid;
+	     				// Find next max v/w item index=m
+	             	 for(m=i;m<n;m++)
+	     	       {
+		  	            for(t=0;max->items[t]!=NULL;t++)
+		      	       {
+		    	            if(item_list[m].name==max->items[t])
+		    	            break;
+		        		}
+	             	if(t==k)
+			        break;
+		            }
+				}
+	     	
+	        }
+	     		
+			  }
+			 return max;
+	    
+	}
+	for(i=j+1;i<n;i++)// Head null olamyinca yeni node olustur
+	{
+	
+	   if(empty>=item_list[i].weight)
+	   {
+		    
+		    
+		    // 	yerlestirme
+	     	for(t=0;tmp->child[t]!=NULL;t++);
+	     	tmp->child[t]=new_node;
+	     	new_node->totv=tmp->totv+item_list[i].value;
+	     	new_node->totw=tmp->totw+item_list[i].weight;
+	     	new_node->child=(struct tree **)malloc(sizeof(struct tree*)*n);
+	     	for(k=0;k<n;k++)
+	     	new_node->child[k]=	NULL;
+	     	new_node->items=(char*)malloc(sizeof(char)*(n+1));
+	     	for(k=0;tmp->items[k]!=NULL;k++)
+	     	new_node->items[k]=tmp->items[k];
+	     	new_node->items[k]=item_list[i].name;
+	     	new_node->items[k+1]=NULL;
+	     	// Find next max v/w item index=m
+	     	for(m=i;m<n;m++)
+	     	{
+		  	    for(t=0;new_node->items[t]!=NULL;t++)
+		  	    {
+		  	     if(item_list[m].name==new_node->items[t])
+		  	     break;
+				}
+			if(t==k)
+			break;
+		    }
+	     	//Recursive (üstekiyle ayni) bu sefer head new_node oluo
+	     	max=insert_item(new_node,item_list,empty-item_list[i].weight,n,i);
+	     	if(max==new_node)
+	     	return new_node;
+	     	else
+			 {
+			 	for(r=i+1;r<n;r++)// r i+1 den baslat önceki esyalar kulanamaz
+			 	{
+				 
+	     		if(((max->totv)-(new_node->totv))/(empty-item_list[i].weight)>item_list[m].density)
+	     		return max;
+	     		kid=insert_item(new_node,item_list,empty-item_list[i].weight,n,r);
+	     		if(((kid->totv)-(new_node->totv))/(empty-item_list[i].weight)>((max->totv)-(new_node->totv))/(empty-item_list[i].weight))
+	     		max=kid;
+	     	
+	     	   }
+	     		
+			 }
+			 return max;
+	     	
+	    
+		   return new_node;  
+     	}
+    }
+    return tmp; // Eger hiçbirsey ekleyemezse headi yani tmpi returnle
+}
+
+char *Max(struct items *item_list,int capacity,int n)// item_listi sortliyor ve maxin stringini returnliyor, parametre sayisi daha az
+{                                                    // mainde daha rahat kullanmak için
+
+	int i,j;
+
+	for(i=0;i<n-1;i++)
+	for(j=0;j<n-1;j++) //Sorting loops
+	{
+		if(item_list[j].density<item_list[j+1].density)
+		{
+			struct items tmp=item_list[j];
+			item_list[j]=item_list[j+1];
+			item_list[j+1]=tmp;
+	    }
+	}
+   struct tree *head=NULL;
+   struct tree *max=NULL;
+   max=insert_item(head,item_list,capacity,n,-1);
+ return max->items;
+	
+}
+main()
+{
+	struct items a[4];
+	char Names[5]="abcd";
+	int values[4]={20,15,25,30};
+	int weights[4]={10,1,5,7};
+	int i;
+	for(i=0;i<4;i++)
+	{
+		a[i].name=Names[i];
+		a[i].value=values[i];
+		a[i].weight=weights[i];
+		a[i].density=(a[i].value)/(a[i].weight);
+	}
+	for(i=0;i<4;i++)
+	printf("%c: v=%d w=%d d=%f\n",(a+i)->name,(a+i)->value,a[i].weight,a[i].density);
+ struct tree *head=NULL;
+ 
+ printf("%s",Max(a,10,4));
+}
